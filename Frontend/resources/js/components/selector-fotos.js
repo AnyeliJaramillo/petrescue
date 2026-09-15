@@ -19,6 +19,7 @@ export function iniciarSelectorFotos(root, urls = URL) {
         const previews = selector.querySelector('[data-fotos-previews]');
         const clear = selector.querySelector('[data-fotos-limpiar]');
         const label = selector.querySelector('[data-fotos-etiqueta]');
+        const count = selector.querySelector('[data-fotos-cantidad]');
         const form = input.closest('form');
         const doc = selector.ownerDocument;
         let objectUrls = [];
@@ -34,8 +35,12 @@ export function iniciarSelectorFotos(root, urls = URL) {
             release();
             previews.replaceChildren();
             const files = Array.from(input.files ?? []);
+            if (files.length && !Number(count.value)) count.value = String(files.length);
             const errors = new Map();
-            clear.hidden = files.length === 0;
+            const missingFiles = files.length !== Number(count.value);
+            if (missingFiles) errors.set('missing', 'Las fotos anteriores ya no están adjuntas. Selecciónalas nuevamente o elige Continuar sin fotos.');
+            clear.hidden = files.length === 0 && !missingFiles;
+            clear.textContent = missingFiles ? 'Continuar sin fotos' : 'Quitar selección';
             label.textContent = files.length ? 'Cambiar fotos' : 'Seleccionar fotos';
 
             const refreshStatus = () => {
@@ -90,22 +95,36 @@ export function iniciarSelectorFotos(root, urls = URL) {
 
         const clearSelection = () => {
             input.value = '';
+            count.value = '0';
             render();
+        };
+        const onChange = () => {
+            count.value = String(input.files?.length ?? 0);
+            render();
+        };
+        const onSubmit = (event) => {
+            if (Number(count.value) !== (input.files?.length ?? 0)) {
+                event.preventDefault();
+                render();
+                input.reportValidity();
+            }
         };
         // El evento reset se emite antes de que el navegador restablezca los campos.
         const onReset = (event) => queueMicrotask(() => {
-            if (!event.defaultPrevented) render();
+            if (!event.defaultPrevented) { count.value = '0'; render(); }
         });
-        input.addEventListener('change', render);
+        input.addEventListener('change', onChange);
         clear.addEventListener('click', clearSelection);
         form?.addEventListener('reset', onReset);
+        form?.addEventListener('submit', onSubmit);
         render();
         cleanups.push(() => {
             version++;
             release();
-            input.removeEventListener('change', render);
+            input.removeEventListener('change', onChange);
             clear.removeEventListener('click', clearSelection);
             form?.removeEventListener('reset', onReset);
+            form?.removeEventListener('submit', onSubmit);
         });
     }
     return () => cleanups.forEach((cleanup) => cleanup());

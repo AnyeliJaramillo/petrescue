@@ -62,7 +62,7 @@ Mascotas {{ $tipo }}s
 
                         <div class="h-52 bg-[#eadfd2]">
                             @if ($reporte->imagenes !== [])
-                                <img src="{{ asset('storage/' . $reporte->imagenes[0]['ruta_imagen']) }}"
+                                <img src="{{ $reporte->imagenes[0]['url'] }}"
                                     class="w-full h-full object-cover" alt="Mascota {{ $tipo }}">
                             @else
                                 <div class="w-full h-full flex items-center justify-center text-5xl">

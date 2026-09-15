@@ -7,6 +7,7 @@ use App\Application\Reportes\Data\NuevoReporte;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreReporteRequest extends FormRequest
 {
@@ -69,8 +70,23 @@ class StoreReporteRequest extends FormRequest
                 ['required', 'accepted'], ['nullable', 'boolean'],
             )],
             'imagenes' => 'nullable|array',
+            'imagenes_cantidad' => 'nullable|integer|min:0',
             'imagenes.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->has('imagenes_cantidad') || ! $this->filled('imagenes_cantidad')) {
+                return;
+            }
+            $imagenes = $this->file('imagenes', []);
+            $recibidas = is_array($imagenes) ? count($imagenes) : 0;
+            if ((int) $this->input('imagenes_cantidad') !== $recibidas) {
+                $validator->errors()->add('imagenes', 'No llegaron todas las fotos seleccionadas. Vuelve a seleccionarlas antes de publicar.');
+            }
+        }];
     }
 
     public function messages(): array

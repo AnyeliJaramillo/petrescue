@@ -59,6 +59,7 @@ class ReportesTest extends TestCase
                 ->assertSee('type="hidden" name="longitud"', false);
             $this->post("/reportes-$ruta", $this->datos() + [
                 'imagenes' => [UploadedFile::fake()->image('mascota.jpg')],
+                'imagenes_cantidad' => '1',
                 'latitud' => '1.2136', 'longitud' => '-77.2811',
                 'ubicacion_confirmada' => '1', 'departamento' => 'Nariño', 'direccion' => 'Parque central',
             ])->assertSessionHasNoErrors()->assertRedirect(route("reportes-$ruta.index"));
@@ -72,6 +73,10 @@ class ReportesTest extends TestCase
             Storage::disk('public')->assertExists($reporte->mascota->imagenes->first()->ruta_imagen);
             $this->get("/reportes-$ruta")->assertOk()->assertSee('Ana');
             $this->get("/reportes-$ruta/{$reporte->id}")->assertOk()->assertSee('3001234567');
+            $urlImagen = asset('storage/'.$reporte->mascota->imagenes->first()->ruta_imagen);
+            $this->get("/reportes-$ruta")->assertSee($urlImagen, false);
+            $this->get("/reportes-$ruta/{$reporte->id}")->assertSee($urlImagen, false)
+                ->assertDontSee('Este reporte todavía no tiene fotos.');
         }
 
         $this->assertDatabaseCount('mascotas', 2);
@@ -105,6 +110,26 @@ class ReportesTest extends TestCase
 
         $this->assertDatabaseCount('mascotas', 0);
         $this->assertDatabaseCount('reportes', 0);
+    }
+
+    public function test_no_publica_si_las_fotos_seleccionadas_no_llegan_y_pide_seleccionarlas_de_nuevo(): void
+    {
+        Storage::fake('public');
+        foreach (['perdidos', 'encontrados'] as $ruta) {
+            $this->from("/reportes-$ruta/crear")->post("/reportes-$ruta", $this->datos() + [
+                'imagenes_cantidad' => '1',
+            ])->assertSessionHasErrors('imagenes')->assertRedirect("/reportes-$ruta/crear");
+            $this->get("/reportes-$ruta/crear")->assertOk()
+                ->assertSee('No llegaron todas las fotos seleccionadas')
+                ->assertSee('selecciónalas nuevamente');
+            $this->post("/reportes-$ruta", $this->datos() + [
+                'imagenes_cantidad' => '2',
+                'imagenes' => [UploadedFile::fake()->image('una.jpg')],
+            ])->assertSessionHasErrors('imagenes');
+        }
+        $this->assertDatabaseCount('reportes', 0);
+        $this->assertDatabaseCount('imagen_mascotas', 0);
+        $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
     public function test_un_error_al_guardar_revierte_los_registros_y_las_fotos(): void

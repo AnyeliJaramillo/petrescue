@@ -15,7 +15,7 @@
             <h1 class="text-3xl font-bold mt-2 mb-6">{{ $reporte->titulo }}</h1>
             <div class="grid md:grid-cols-2 gap-6 mb-8">
                 @forelse ($reporte->imagenes as $imagen)
-                    <img src="{{ asset('storage/' . $imagen['ruta_imagen']) }}" alt="{{ $imagen['descripcion'] ?? 'Foto de la mascota' }}" class="w-full rounded-2xl max-h-96 object-contain bg-[#f8f4ec]">
+                    <img src="{{ $imagen['url'] }}" alt="{{ $imagen['descripcion'] ?? 'Foto de la mascota' }}" class="w-full rounded-2xl max-h-96 object-contain bg-[#f8f4ec]">
                 @empty
                     <p class="rounded-2xl bg-[#f8f4ec] p-8">Este reporte todavía no tiene fotos.</p>
                 @endforelse

@@ -10,6 +10,7 @@ use App\Infrastructure\Geocoding\GeoapifyGeocodificador;
 use App\Infrastructure\Persistence\EloquentRepositorioReportes;
 use App\Infrastructure\Persistence\LaravelTransacciones;
 use App\Infrastructure\Storage\LaravelAlmacenImagenes;
+use App\Infrastructure\Storage\SupabaseAlmacenImagenes;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,7 +25,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(Geocodificador::class, GeoapifyGeocodificador::class);
         $this->app->bind(RepositorioReportes::class, EloquentRepositorioReportes::class);
-        $this->app->bind(AlmacenImagenes::class, LaravelAlmacenImagenes::class);
+        $this->app->bind(AlmacenImagenes::class, fn ($app) => match (config('imagenes.almacen')) {
+            'local' => $app->make(LaravelAlmacenImagenes::class),
+            'supabase' => $app->make(SupabaseAlmacenImagenes::class),
+            default => throw new \RuntimeException('IMAGENES_ALMACEN debe ser local o supabase.'),
+        });
         $this->app->bind(Transacciones::class, LaravelTransacciones::class);
     }
 

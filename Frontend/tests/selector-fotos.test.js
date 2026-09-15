@@ -4,6 +4,7 @@ import { errorDeFoto, iniciarSelectorFotos } from '../resources/js/components/se
 
 function element(tag = 'div') {
     const listeners = new Map();
+    let value = '';
     return {
         tag, children: [], hidden: false, textContent: '', attributes: {}, files: [],
         append(...children) { this.children.push(...children); },
@@ -13,14 +14,17 @@ function element(tag = 'div') {
         fire(event, detail = {}) { listeners.get(event)?.(detail); },
         setAttribute(key, value) { this.attributes[key] = value; },
         setCustomValidity(value) { this.validityMessage = value; },
-        set value(value) { if (value === '') this.files = []; },
+        get value() { return value; },
+        set value(next) { value = next; if (next === '') this.files = []; },
+        reportValidity() { this.validityReported = true; },
     };
 }
 
-function selector() {
-    const fields = Object.fromEntries(['input', 'estado', 'errores', 'previews', 'limpiar', 'etiqueta']
+function selector(expected = '0') {
+    const fields = Object.fromEntries(['input', 'estado', 'errores', 'previews', 'limpiar', 'etiqueta', 'cantidad']
         .map((name) => [name, element()]));
     const form = element('form');
+    fields.cantidad.value = expected;
     fields.input.closest = () => form;
     const container = {
         ownerDocument: { createElement: (tag) => element(tag) },
@@ -124,4 +128,37 @@ test('cancelar el selector conserva las fotos y desmontar libera sus URLs', () =
 test('funciona en páginas sin selector de fotos', () => {
     const cleanup = iniciarSelectorFotos({ querySelectorAll: () => [] });
     assert.doesNotThrow(cleanup);
+});
+
+test('al volver de un error pide volver a adjuntar las fotos y permite renunciar explícitamente', () => {
+    const ui = selector('2');
+    assert.match(ui.errores.children[0].textContent, /Selecciónalas nuevamente/);
+    assert.notEqual(ui.input.validityMessage, '');
+    assert.equal(ui.limpiar.textContent, 'Continuar sin fotos');
+    ui.choose([foto()]);
+    assert.equal(ui.cantidad.value, '1');
+    assert.equal(ui.input.validityMessage, '');
+    ui.limpiar.fire('click');
+    assert.equal(ui.cantidad.value, '0');
+    assert.equal(ui.input.validityMessage, '');
+});
+
+test('si el navegador pierde los archivos después de seleccionarlos impide el envío silencioso', () => {
+    const ui = selector();
+    ui.choose([foto()]);
+    ui.input.files = [];
+    let prevented = false;
+    ui.form.fire('submit', { preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(ui.cantidad.value, '1');
+    assert.notEqual(ui.input.validityMessage, '');
+    assert.equal(ui.input.validityReported, true);
+});
+
+test('el envío válido conserva los archivos y la cantidad seleccionada', () => {
+    const ui = selector();
+    ui.choose([foto(), foto('segunda.png', 'image/png')]);
+    ui.form.fire('submit', { preventDefault() { assert.fail('No debe bloquear fotos válidas'); } });
+    assert.equal(ui.cantidad.value, '2');
+    assert.equal(ui.input.files.length, 2);
 });

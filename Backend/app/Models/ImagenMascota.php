@@ -12,6 +12,13 @@ class ImagenMascota extends Model
         'descripcion',
     ];
 
+    public function getUrlAttribute(): string
+    {
+        $ruta = (string) $this->ruta_imagen;
+
+        return preg_match('#^https?://#i', $ruta) ? $ruta : asset('storage/'.$ruta);
+    }
+
     public function mascota()
     {
         return $this->belongsTo(Mascota::class);

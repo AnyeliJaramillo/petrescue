@@ -72,7 +72,7 @@ final class EloquentRepositorioReportes implements RepositorioReportes
                 'ciudad', 'departamento', 'barrio', 'direccion', 'referencia', 'latitud', 'longitud',
             ]),
             imagenes: $reporte->mascota?->imagenes->map(fn ($imagen) => $imagen->only([
-                'ruta_imagen', 'descripcion',
+                'ruta_imagen', 'descripcion', 'url',
             ]))->all() ?? [],
         );
     }
