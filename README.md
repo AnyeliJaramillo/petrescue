@@ -1,59 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PetRescue — Huellas en Casa
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicación Laravel MVC para publicar y consultar reportes de mascotas perdidas y encontradas. El código se divide físicamente en **Backend** y **Frontend** y mantiene las capas de Clean Architecture.
 
-## About Laravel
+## Estructura
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```text
+petrescue/
+├── Backend/
+│   ├── app/
+│   │   ├── Domain/
+│   │   ├── Application/
+│   │   ├── Infrastructure/
+│   │   ├── Http/
+│   │   ├── Models/
+│   │   └── Providers/
+│   ├── bootstrap/
+│   ├── config/
+│   ├── database/
+│   ├── routes/web.php
+│   ├── public/
+│   ├── storage/
+│   ├── tests/
+│   ├── artisan
+│   └── composer.json
+├── Frontend/
+│   ├── resources/
+│   │   ├── views/
+│   │   ├── css/
+│   │   └── js/
+│   ├── tests/
+│   ├── package.json
+│   └── vite.config.js
+├── docs/ARQUITECTURA.md
+└── README.md
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Backend:** rutas, validación, controladores, casos de uso, dominio, persistencia y fotos. **Frontend:** HTML Blade, estilos e interacción del navegador. Laravel renderiza las vistas del Frontend mediante `Backend/config/view.php`; Vite publica los recursos en `Backend/public/build`.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Consulta [la guía de arquitectura](docs/ARQUITECTURA.md) para conocer los contratos, dependencias y flujos.
 
-## Learning Laravel
+La selección de ubicación utiliza Leaflet, OpenStreetMap y un adaptador de Geoapify. Para activar la búsqueda de direcciones configura `GEOAPIFY_API_KEY` en `Backend/.env`: consulta [configuración y uso de mapas](docs/MAPAS.md).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Ejecutar el proyecto preparado
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Desde la carpeta `petrescue`:
 
-## Laravel Sponsors
+```powershell
+php Backend/artisan serve
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Abre la dirección que muestre Laravel. Para recompilar los recursos:
 
-### Premium Partners
+```powershell
+npm.cmd --prefix Frontend run build
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Para iniciar servidor, cola y Vite con recarga automática:
 
-## Contributing
+```powershell
+composer --working-dir=Backend run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+También puedes iniciar los procesos en terminales separadas: `php Backend/artisan serve` y `npm.cmd --prefix Frontend run dev`. Con Vite activo, abre la dirección de Laravel para usar la aplicación.
 
-## Code of Conduct
+## Instalación nueva
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Requisitos: PHP 8.2+, Composer, SQLite con `pdo_sqlite`, `fileinfo` para imágenes y Node.js compatible con Vite 7 (20.19+ o 22.12+).
 
-## Security Vulnerabilities
+Desde `petrescue`:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```powershell
+composer --working-dir=Backend install
+if (!(Test-Path Backend/.env)) { Copy-Item Backend/.env.example Backend/.env }
+```
 
-## License
+Ejecuta `php Backend/artisan key:generate` si la nueva instalación tiene `APP_KEY` vacío. Conserva la clave de instalaciones existentes.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```powershell
+if (!(Test-Path Backend/database/database.sqlite)) { New-Item Backend/database/database.sqlite -ItemType File }
+php Backend/artisan migrate
+php Backend/artisan storage:link
+npm.cmd --prefix Frontend ci
+npm.cmd --prefix Frontend run build
+php Backend/artisan serve
+```
+
+El enlace `Backend/public/storage` debe apuntar a `Backend/storage/app/public`. Si el enlace no existe y Windows no permite enlaces simbólicos, puedes crear una unión desde `petrescue`:
+
+```powershell
+New-Item -ItemType Junction -Path Backend/public/storage -Target (Join-Path (Get-Location) 'Backend/storage/app/public')
+```
+
+Configura el servidor web para servir **Backend/public**. La configuración privada está en `Backend/.env`; `Frontend` consume únicamente las variables públicas `VITE_*` mediante Vite.
+
+## Pruebas
+
+Desde `petrescue`:
+
+```powershell
+composer --working-dir=Backend test
+npm.cmd --prefix Frontend test
+npm.cmd --prefix Frontend run build
+php Backend/artisan view:cache
+php Backend/artisan route:list --except-vendor
+```
+
+Las pruebas PHP usan SQLite en memoria y cubren los flujos de reportes, fotos, validación, paginación, DTO, arquitectura y recuperación ante fallos. Las pruebas JavaScript comprueban geolocalización con un formulario simulado.
+
+## Rutas y datos
+
+- `/`: inicio.
+- `/reportes-perdidos` y `/reportes-encontrados`: listados paginados.
+- Las mismas rutas con `/crear`: formularios.
+- Las mismas rutas con `/{id}`: detalles.
+
+Se aceptan fotos JPG/PNG de hasta 2 MB, coordenadas opcionales enviadas juntas y fechas del evento que no sean futuras. Los módulos de búsqueda y mapa siguen pendientes.
+
+La reorganización de carpetas no necesita nuevas migraciones ni reiniciar la base. La base SQLite existente vive en `Backend/database/database.sqlite`, las fotos en `Backend/storage/app/public` y los respaldos en `Backend/storage/app/private/backups`. Para actualizar un esquema existente usa `php Backend/artisan migrate`; evita `migrate:fresh` y `migrate:reset` si debes conservar datos.

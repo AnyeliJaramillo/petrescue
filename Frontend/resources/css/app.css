@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+@import './components/location-selector.css';
+@import './components/forms.css';
+@import './components/photo-selector.css';
+@import './pages/home.css';
+
+@source '../../../Backend/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../../Backend/storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
