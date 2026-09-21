@@ -18,7 +18,7 @@ Huellas en Casa
             </p>
             <div class="home-actions">
                 <a href="{{ route('reportes-perdidos.create') }}" class="home-button home-button-primary">Perdí mi mascota</a>
-                <a href="{{ route('reportes-encontrados.create') }}" class="home-button">Encontré una mascota</a>
+                <a href="{{ route('reportes-encontrados.create') }}" class="home-button">Reportar mascota vista</a>
             </div>
             <div class="home-benefits">
                 <span>Publicar es gratis</span>
@@ -29,7 +29,7 @@ Huellas en Casa
             <div class="home-panel-content">
                 <p class="home-paws" aria-hidden="true">🐾</p>
                 <h2 id="home-panel-title" class="home-panel-title">Ayudemos a reunir familias</h2>
-                <p class="home-panel-description">Consulta los reportes de mascotas perdidas y encontradas de la comunidad.</p>
+                <p class="home-panel-description">Consulta los reportes de mascotas perdidas y vistas de la comunidad.</p>
             </div>
             <a href="{{ route('busquedas.index') }}" class="home-panel-link">
                 <div>

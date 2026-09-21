@@ -13,6 +13,7 @@ final readonly class FiltrosReportes
         public ?string $tamano = null,
         public ?string $sexo = null,
         public ?string $raza = null,
+        public ?string $ubicacion = null,
     ) {}
 
     /** @return array<string, string> */
@@ -30,6 +31,8 @@ final readonly class FiltrosReportes
     /** @return array<string, string> */
     public function parametros(): array
     {
-        return ($this->tipo ? ['tipo_reporte' => $this->tipo->value] : []) + $this->caracteristicas();
+        return ($this->tipo ? ['tipo_reporte' => $this->tipo->value] : [])
+            + $this->caracteristicas()
+            + ($this->ubicacion !== null && $this->ubicacion !== '' ? ['ubicacion' => $this->ubicacion] : []);
     }
 }

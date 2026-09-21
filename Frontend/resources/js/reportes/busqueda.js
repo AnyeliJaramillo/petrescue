@@ -13,6 +13,17 @@ export function iniciarBusquedaReportes(root, request) {
         let disposed = false;
         let retryUrl;
         const listeners = [];
+        const syncRaces = () => {
+            const species = select('[data-filter-species]');
+            const race = select('[data-filter-race]');
+            if (!species || !race) return;
+            const value = species.value;
+            for (const option of race.options) {
+                if (!option.value) continue;
+                option.hidden = Boolean(value) && !(option.dataset.species || '').split(',').includes(value);
+            }
+            if (race.selectedOptions[0]?.hidden) race.value = '';
+        };
         const listen = (target, name, callback, capture = false) => {
             target.addEventListener(name, callback, capture);
             listeners.push(() => target.removeEventListener(name, callback, capture));
@@ -60,6 +71,7 @@ export function iniciarBusquedaReportes(root, request) {
                 heading.focus({ preventScroll: true });
                 heading.scrollIntoView({ block: 'start', behavior: 'instant' });
                 checkPhotos();
+                syncRaces();
             } catch (failure) {
                 if (current !== version || disposed || (failure.name === 'AbortError' && !timeout)) return;
                 status.textContent = '';
@@ -81,6 +93,9 @@ export function iniciarBusquedaReportes(root, request) {
             }
             void load(url);
         });
+        listen(container, 'change', event => {
+            if (event.target.matches('[data-filter-species]')) syncRaces();
+        });
         listen(container, 'click', event => {
             if (event.target.closest('[data-search-retry]')) {
                 if (retryUrl) void load(retryUrl);
@@ -98,6 +113,7 @@ export function iniciarBusquedaReportes(root, request) {
         }, true);
         listen(win, 'popstate', () => { void load(new win.URL(win.location.href), false); });
         checkPhotos();
+        syncRaces();
         cleanups.push(() => {
             disposed = true;
             version++;

@@ -31,7 +31,7 @@ class ReporteEncontradaController extends Controller
         $publicar->ejecutar($request->aDatos(), TipoReporte::Encontrada);
 
         return redirect()->route('reportes-encontrados.index')
-            ->with('success', 'Reporte de mascota encontrada publicado correctamente.');
+            ->with('success', 'Reporte de mascota vista publicado correctamente.');
     }
 
     public function show(string $id, ConsultarReportes $consultar): View

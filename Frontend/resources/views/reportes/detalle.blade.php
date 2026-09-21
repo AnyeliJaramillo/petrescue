@@ -1,8 +1,6 @@
 @extends('layouts.app')
 
-@section('title')
-{{ $reporte->titulo }} — Huellas en Casa
-@endsection
+@section('title', 'Reporte de mascota ' . ($reporte->tipo_reporte === 'encontrada' ? 'vista' : 'perdida') . ' — Huellas en Casa')
 
 @section('content')
 <header class="max-w-5xl mx-auto px-6 py-6 flex flex-wrap justify-between gap-4">
@@ -11,8 +9,8 @@
     </header>
     <main class="max-w-5xl mx-auto px-6 pb-12">
         <article class="bg-white rounded-3xl p-6 md:p-10 shadow">
-            <p class="text-[#2f7d68] font-semibold">{{ ucfirst($reporte->tipo_reporte) }} · {{ ucfirst($reporte->estado) }}</p>
-            <h1 class="text-3xl font-bold mt-2 mb-6">{{ $reporte->titulo }}</h1>
+            <p class="text-[#2f7d68] font-semibold">{{ $reporte->tipo_reporte === 'encontrada' ? 'Vista' : 'Perdida' }} · {{ $reporte->estado === 'activo' ? 'Búsqueda activa' : 'Caso cerrado' }}</p>
+            <h1 class="text-3xl font-bold mt-2 mb-6">Mascota {{ $reporte->tipo_reporte === 'encontrada' ? 'vista' : 'perdida' }}: {{ $reporte->mascota['nombre'] ?? $reporte->mascota['especie'] ?? 'sin nombre' }}</h1>
             <div class="grid md:grid-cols-2 gap-6 mb-8">
                 @forelse ($reporte->imagenes as $imagen)
                     <img src="{{ $imagen['url'] }}" alt="{{ $imagen['descripcion'] ?? 'Foto de la mascota' }}" class="w-full rounded-2xl max-h-96 object-contain bg-[#f8f4ec]">

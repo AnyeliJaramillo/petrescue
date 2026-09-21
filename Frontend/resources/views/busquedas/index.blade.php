@@ -6,7 +6,7 @@
     <header class="search-intro">
         <p class="search-eyebrow">UNA PISTA PUEDE REUNIR UNA FAMILIA</p>
         <h1>Buscar mascotas reportadas</h1>
-        <p>Utiliza los filtros para encontrar mascotas perdidas o encontradas con características similares.</p>
+        <p>Utiliza los filtros para encontrar mascotas perdidas o vistas con características similares.</p>
     </header>
     <p class="search-status" data-search-status role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="search-error" data-search-error role="alert" hidden>
@@ -24,28 +24,55 @@
                     <div class="search-field">
                         <label for="buscar-tipo_reporte">Tipo de reporte</label>
                         <select id="buscar-tipo_reporte" name="tipo_reporte">
-                            <option value="">Perdidas y encontradas</option>
+                            <option value="">Perdidas y vistas</option>
                             <option value="perdida" @selected(($filtros['tipo_reporte'] ?? '') === 'perdida')>Perdida</option>
-                            <option value="encontrada" @selected(($filtros['tipo_reporte'] ?? '') === 'encontrada')>Encontrada</option>
+                            <option value="encontrada" @selected(($filtros['tipo_reporte'] ?? '') === 'encontrada')>Vista</option>
                         </select>
                     </div>
+                    @php
+                        $etiquetasCatalogo = config('mascotas.especies')
+                            + config('mascotas.colores')
+                            + config('mascotas.tamanos')
+                            + config('mascotas.sexos')
+                            + config('mascotas.razas.perro')
+                            + config('mascotas.razas.gato');
+                        $razasPerro = array_keys(config('mascotas.razas.perro'));
+                        $razasGato = array_keys(config('mascotas.razas.gato'));
+                    @endphp
                     @foreach (['especie' => 'Especie', 'color_principal' => 'Color principal', 'tamano' => 'Tamaño', 'sexo' => 'Sexo', 'raza' => 'Raza'] as $campo => $etiqueta)
-                        @php($seleccion = $filtros[$campo] ?? '')
-                        <div class="search-field">
+                        @php
+                            $seleccion = $filtros[$campo] ?? '';
+                        @endphp
+                        <div class="search-field" @if ($campo === 'raza') data-filter-race-field @endif>
                             <label for="buscar-{{ $campo }}">{{ $etiqueta }}</label>
-                            <select id="buscar-{{ $campo }}" name="{{ $campo }}">
+                            <select id="buscar-{{ $campo }}" name="{{ $campo }}" @if ($campo === 'especie') data-filter-species @elseif ($campo === 'raza') data-filter-race @endif>
                                 <option value="">Cualquier {{ mb_strtolower($etiqueta) }}</option>
                                 @if ($seleccion !== '' && !in_array($seleccion, $opciones[$campo], true))
                                     <option value="{{ $seleccion }}" selected>{{ ucfirst($seleccion) }}</option>
                                 @endif
                                 @foreach ($opciones[$campo] as $valor)
-                                    <option value="{{ $valor }}" @selected($seleccion === $valor)>{{ ucfirst($valor) }}</option>
+                                    @php
+                                        $especiesRaza = $campo !== 'raza' ? '' : (
+                                            in_array($valor, $razasPerro, true) && in_array($valor, $razasGato, true) ? 'perro,gato' :
+                                            (in_array($valor, $razasPerro, true) ? 'perro' : (in_array($valor, $razasGato, true) ? 'gato' : 'perro,gato'))
+                                        );
+                                    @endphp
+                                    <option value="{{ $valor }}"@if ($campo === 'raza') data-species="{{ $especiesRaza }}" @endif{{ $seleccion === $valor ? ' selected' : '' }}>{{ $etiquetasCatalogo[$valor] ?? ucfirst($valor) }}</option>
                                 @endforeach
                             </select>
                         </div>
                     @endforeach
                 </div>
             </fieldset>
+            <div class="search-location-filter">
+                <h2>Zona de búsqueda</h2>
+                <div class="search-field">
+                    <label for="buscar-ubicacion">Ubicación</label>
+                    <input id="buscar-ubicacion" name="ubicacion" type="search"
+                        value="{{ $filtros['ubicacion'] ?? '' }}"
+                        placeholder="Barrio, ciudad o departamento">
+                </div>
+            </div>
             <div class="search-filter-actions">
                 <p>Se muestran reportes activos. Puedes combinar varios filtros.</p>
                 <div><a href="{{ route('busquedas.index') }}" class="search-clear" data-search-link>Limpiar filtros</a><button type="submit" class="search-button">Aplicar filtros</button></div>
@@ -60,7 +87,7 @@
                 <ul class="search-applied" aria-label="Filtros aplicados">
                     @foreach ($filtros as $campo => $valor)
                         <li><a data-search-link href="{{ route('busquedas.index', array_diff_key($filtros, [$campo => true])) }}"
-                            aria-label="Quitar filtro {{ str_replace('_', ' ', $campo) }}: {{ $valor }}">{{ ['tipo_reporte' => 'Reporte', 'especie' => 'Especie', 'color_principal' => 'Color', 'tamano' => 'Tamaño', 'sexo' => 'Sexo', 'raza' => 'Raza'][$campo] }}: {{ ucfirst($valor) }} <span aria-hidden="true">×</span></a></li>
+                            aria-label="Quitar filtro {{ str_replace('_', ' ', $campo) }}: {{ $valor }}">{{ ['tipo_reporte' => 'Reporte', 'especie' => 'Especie', 'color_principal' => 'Color', 'tamano' => 'Tamaño', 'sexo' => 'Sexo', 'raza' => 'Raza', 'ubicacion' => 'Ubicación'][$campo] }}: {{ ucfirst($valor) }} <span aria-hidden="true">×</span></a></li>
                     @endforeach
                 </ul>
             @endif

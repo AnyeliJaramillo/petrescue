@@ -1,4 +1,4 @@
-@props(['name', 'label', 'type' => 'text', 'required' => false, 'maxlength' => null, 'max' => null, 'placeholder' => '', 'options' => [], 'wide' => false, 'autocomplete' => 'off', 'id' => null])
+@props(['name', 'label', 'type' => 'text', 'required' => false, 'maxlength' => null, 'max' => null, 'placeholder' => '', 'options' => [], 'wide' => false, 'autocomplete' => 'off', 'id' => null, 'custom' => null, 'dataAttributes' => []])
 @php
     $id = $id ?? 'reporte-' . $name;
     $valor = is_scalar(old($name)) ? old($name) : '';
@@ -7,11 +7,18 @@
     <label for="{{ $id }}">{{ $label }} @if ($required)<span aria-hidden="true">*</span>@else<span class="report-optional">Opcional</span>@endif</label>
     @if ($options)
         <select id="{{ $id }}" name="{{ $name }}" class="input" @required($required)
+            @foreach ($dataAttributes as $attribute => $value) data-{{ $attribute }}="{{ $value }}" @endforeach
             @if ($errors->has($name)) aria-invalid="true" aria-describedby="{{ $id }}-error" data-server-error @endif>
             <option value="">Selecciona una opción</option>
             @if ($valor !== '' && !array_key_exists($valor, $options))<option value="{{ $valor }}" selected>{{ $valor }}</option>@endif
             @foreach ($options as $value => $text)<option value="{{ $value }}" @selected($valor === $value)>{{ $text }}</option>@endforeach
         </select>
+        @if ($custom)
+            <input id="{{ $id }}-personalizada" name="{{ $name }}_personalizada" type="text" class="input report-custom-input"
+                value="{{ old($name . '_personalizada') }}" placeholder="{{ $custom['placeholder'] }}"
+                maxlength="{{ $maxlength ?? 100 }}" hidden data-custom-for="{{ $id }}"
+                @if ($errors->has($name . '_personalizada')) aria-invalid="true" @endif>
+        @endif
     @elseif ($type === 'textarea')
         <textarea id="{{ $id }}" name="{{ $name }}" class="input" rows="3" placeholder="{{ $placeholder }}" @required($required)
             @if ($errors->has($name)) aria-invalid="true" aria-describedby="{{ $id }}-error" data-server-error @endif>{{ $valor }}</textarea>

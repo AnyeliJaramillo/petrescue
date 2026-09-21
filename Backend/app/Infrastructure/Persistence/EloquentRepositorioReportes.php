@@ -67,6 +67,16 @@ final class EloquentRepositorioReportes implements RepositorioReportes
         if ($filtros->tipo) {
             $consulta->where('tipo_reporte', $filtros->tipo->value);
         }
+        if ($filtros->ubicacion !== null && $filtros->ubicacion !== '') {
+            $ubicacion = mb_strtolower(trim($filtros->ubicacion));
+            $consulta->whereHas('ubicacion', function ($query) use ($ubicacion) {
+                $query->where(function ($q) use ($ubicacion) {
+                    foreach (['barrio', 'ciudad', 'departamento'] as $campo) {
+                        $q->orWhereRaw('LOWER(COALESCE('.$campo.", '')) LIKE ?", ['%'.$ubicacion.'%']);
+                    }
+                });
+            });
+        }
         $consulta->whereHas('mascota', function ($query) use ($filtros) {
             // Nombres de columnas cerrados por el DTO; valores siempre parametrizados.
             foreach ($filtros->caracteristicas() as $campo => $valor) {
@@ -80,6 +90,7 @@ final class EloquentRepositorioReportes implements RepositorioReportes
             array_map(fn (Reporte $reporte) => new ReporteTarjeta(
                 id: $reporte->id,
                 tipo_reporte: $reporte->tipo_reporte,
+                estado: $reporte->estado ?? 'activo',
                 fecha_evento: $reporte->fecha_evento,
                 mascota: $reporte->mascota->only(['nombre', 'especie', 'color_principal', 'tamano']),
                 ubicacion: $reporte->ubicacion?->only(['barrio', 'ciudad']),
@@ -91,14 +102,29 @@ final class EloquentRepositorioReportes implements RepositorioReportes
 
     public function opcionesFiltros(): array
     {
+        $bases = [
+            'especie' => array_keys(config('mascotas.especies')),
+            'color_principal' => array_keys(config('mascotas.colores', [])),
+            'tamano' => array_keys(config('mascotas.tamanos')),
+            'sexo' => array_keys(config('mascotas.sexos')),
+            'raza' => array_values(array_unique(array_merge(
+                array_keys(config('mascotas.razas.perro', [])),
+                array_keys(config('mascotas.razas.gato', [])),
+            ))),
+        ];
         $opciones = [];
-        foreach (['especie', 'color_principal', 'tamano', 'sexo', 'raza'] as $campo) {
-            $opciones[$campo] = Mascota::whereHas('reportes', fn ($query) => $query
+        foreach ($bases as $campo => $base) {
+            $personalizados = Mascota::whereHas('reportes', fn ($query) => $query
                 ->where('estado', 'activo')->whereIn('tipo_reporte', array_column(TipoReporte::cases(), 'value')))
                 ->whereNotNull($campo)->whereRaw('TRIM('.$campo.") <> ''")
                 ->selectRaw('LOWER(TRIM('.$campo.')) AS valor')
-                ->distinct()->orderBy('valor')->pluck('valor')->all();
+                ->distinct()->pluck('valor')->all();
+            $opciones[$campo] = array_values(array_unique(array_merge($base, $personalizados)));
         }
+        $opciones['especie'] = array_values(array_intersect($opciones['especie'], ['perro', 'gato']));
+        $opciones['color_principal'] = array_values(array_diff($opciones['color_principal'], ['otro']));
+        $opciones['sexo'] = array_values(array_diff($opciones['sexo'], ['no_se']));
+        $opciones['raza'] = array_values(array_diff($opciones['raza'], ['otra', 'no_se']));
 
         return $opciones;
     }

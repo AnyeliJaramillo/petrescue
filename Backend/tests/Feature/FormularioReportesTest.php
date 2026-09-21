@@ -12,7 +12,7 @@ class FormularioReportesTest extends TestCase
     {
         foreach (['perdidos' => 'perdida', 'encontrados' => 'encontrada'] as $ruta => $tipo) {
             $response = $this->get("/reportes-$ruta/crear")->assertOk()
-                ->assertSee('Reporta una mascota '.$tipo)
+                ->assertSee('Reporta una mascota '.($tipo === 'encontrada' ? 'vista' : 'perdida'))
                 ->assertSee('method="POST"', false)
                 ->assertSee('enctype="multipart/form-data"', false)
                 ->assertSee('action="'.route("reportes-$ruta.store").'"', false)

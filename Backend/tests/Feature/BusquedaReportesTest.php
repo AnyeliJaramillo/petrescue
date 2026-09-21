@@ -58,6 +58,22 @@ class BusquedaReportesTest extends TestCase
         $this->assertSame([], $this->ids(['especie' => 'gato', 'color_principal' => 'negro']));
     }
 
+    public function test_ubicacion_busca_en_barrio_ciudad_y_departamento_y_se_combina_con_and(): void
+    {
+        $pasto = $this->reporte([], []);
+        $pasto->ubicacion()->update(['barrio' => 'San Ignacio', 'ciudad' => 'Pasto', 'departamento' => 'Nariño']);
+        $bogota = $this->reporte(['especie' => 'gato'], []);
+        $bogota->ubicacion()->update(['barrio' => 'Centro', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca']);
+
+        $this->assertSame([$pasto->id], $this->ids(['ubicacion' => 'past']));
+        $this->assertSame([$pasto->id], $this->ids(['ubicacion' => 'Nariño']));
+        $this->assertSame([$pasto->id], $this->ids(['ubicacion' => 'san ignacio']));
+        $this->assertSame([$pasto->id], $this->ids(['especie' => 'perro', 'ubicacion' => 'Pasto']));
+        $this->assertSame([], $this->ids(['especie' => 'perro', 'tamano' => 'grande', 'ubicacion' => 'Pasto']));
+        $this->assertSame([], $this->ids(['ubicacion' => 'Lugar inexistente']));
+        $this->assertEqualsCanonicalizing([$pasto->id, $bogota->id], $this->ids(['ubicacion' => '']));
+    }
+
     public function test_excluye_inactivos_aunque_el_cliente_envie_estado(): void
     {
         $active = $this->reporte();
@@ -73,7 +89,7 @@ class BusquedaReportesTest extends TestCase
     public function test_parametros_son_validados_y_los_valores_no_se_interpolan_en_sql(): void
     {
         $this->reporte();
-        foreach ([['tipo_reporte' => 'otro'], ['especie' => ['perro']], ['tamano' => str_repeat('x', 51)], ['page' => -1], ['page' => '1 OR 1=1']] as $invalid) {
+        foreach ([['tipo_reporte' => 'otro'], ['especie' => ['perro']], ['tamano' => str_repeat('x', 51)], ['ubicacion' => str_repeat('x', 151)], ['page' => -1], ['page' => '1 OR 1=1']] as $invalid) {
             $this->getJson('/buscar?'.http_build_query($invalid))->assertUnprocessable()->assertJsonValidationErrors(array_key_first($invalid));
         }
         $this->get('/buscar?tipo_reporte=invalido')->assertRedirect(route('busquedas.index'))->assertSessionHasErrors('tipo_reporte');
@@ -129,8 +145,8 @@ class BusquedaReportesTest extends TestCase
         $this->reporte(['color_principal' => 'negro y blanco', 'raza' => null]);
         $response = $this->get('/buscar?especie=perro&color_principal=negro');
         $this->assertSame([$match->id], array_column($response->viewData('reportes')->items(), 'id'));
-        $this->assertSame(['perro'], $response->viewData('opciones')['especie']);
-        $this->assertSame([], $response->viewData('opciones')['raza']);
+        $this->assertSame(['perro', 'gato'], $response->viewData('opciones')['especie']);
+        $this->assertContains('pug', $response->viewData('opciones')['raza']);
     }
 
     public function test_vista_conserva_filtros_muestra_fallback_y_omite_contactos(): void

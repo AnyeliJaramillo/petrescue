@@ -25,6 +25,7 @@ class BuscarReportesRequest extends FormRequest
             'tamano' => 'nullable|string|max:50',
             'sexo' => 'nullable|string|max:50',
             'raza' => 'nullable|string|max:100',
+            'ubicacion' => 'nullable|string|max:150',
             'page' => 'nullable|integer|min:1|max:1000000',
         ];
     }
@@ -40,14 +41,15 @@ class BuscarReportesRequest extends FormRequest
             tamano: $datos['tamano'] ?? null,
             sexo: $datos['sexo'] ?? null,
             raza: $datos['raza'] ?? null,
+            ubicacion: $datos['ubicacion'] ?? null,
         );
     }
 
     public function messages(): array
     {
         return [
-            'tipo_reporte.Illuminate\Validation\Rules\Enum' => 'Selecciona Perdida o Encontrada.',
-            'tipo_reporte.enum' => 'Selecciona Perdida o Encontrada.',
+            'tipo_reporte.Illuminate\Validation\Rules\Enum' => 'Selecciona Perdida o Vista.',
+            'tipo_reporte.enum' => 'Selecciona Perdida o Vista.',
             'string' => 'El filtro :attribute debe contener un único valor de texto.',
             'max.string' => 'El filtro :attribute no puede superar :max caracteres.',
             'page.integer' => 'La página debe ser un número entero.',

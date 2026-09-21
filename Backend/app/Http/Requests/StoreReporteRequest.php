@@ -11,6 +11,22 @@ use Illuminate\Validation\Validator;
 
 class StoreReporteRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $datos = $this->all();
+        foreach (['especie', 'raza', 'color_principal', 'color_secundario', 'sexo', 'edad_aproximada'] as $campo) {
+            if (($datos[$campo] ?? null) === 'otra' && trim((string) ($datos[$campo.'_personalizada'] ?? '')) !== '') {
+                $datos[$campo] = trim($datos[$campo.'_personalizada']);
+            }
+            if (in_array($datos[$campo] ?? null, ['no_se'], true)) {
+                $datos[$campo] = null;
+            }
+            if ($campo === 'color_secundario' && ($datos[$campo] ?? null) === '') {
+                $datos[$campo] = null;
+            }
+        }
+        $this->merge($datos);
+    }
     public function aDatos(): NuevoReporte
     {
         $datos = $this->validated();
@@ -48,13 +64,13 @@ class StoreReporteRequest extends FormRequest
             'responsable_telefono' => 'required|string|max:30',
             'responsable_correo' => 'nullable|email|max:255',
             'nombre' => 'nullable|string|max:255',
-            'especie' => 'required|string|max:100',
-            'raza' => 'nullable|string|max:100',
-            'color_principal' => 'required|string|max:100',
-            'color_secundario' => 'nullable|string|max:100',
-            'tamano' => 'required|string|max:50',
+            'especie' => ['required', 'string', 'max:100', Rule::in(array_keys(config('mascotas.especies')))],
+            'raza' => 'nullable|string|max:100|not_in:otra',
+            'color_principal' => 'required|string|max:100|not_in:otro',
+            'color_secundario' => 'nullable|string|max:100|not_in:otro',
+            'tamano' => ['required', 'string', 'max:50', Rule::in(array_keys(config('mascotas.tamanos')))],
             'sexo' => 'nullable|string|max:50',
-            'edad_aproximada' => 'nullable|string|max:100',
+            'edad_aproximada' => 'nullable|string|max:100|not_in:otra',
             'descripcion' => 'nullable|string',
             'rasgos_distintivos' => 'nullable|string',
             'fecha_evento' => 'required|date|before_or_equal:today',

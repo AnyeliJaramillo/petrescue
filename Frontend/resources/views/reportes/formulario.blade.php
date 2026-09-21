@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Reporta una mascota ' . $tipo . ' | Huellas en Casa')
+@section('title', 'Reporta una mascota ' . ($tipo === 'encontrada' ? 'vista' : 'perdida') . ' | Huellas en Casa')
 @section('content')
 @php
     // Configuración de presentación. El controlador determina el tipo publicado.
@@ -17,15 +17,15 @@
         'consejo' => 'Ayuda a reconocerla',
         'ayuda_consejo' => 'Una foto nítida y sus rasgos distintivos pueden hacer la diferencia para que alguien la identifique.',
     ] : [
-        'etiqueta' => 'Reporte de mascota encontrada',
-        'introduccion' => 'Comparte sus características y el lugar donde fue encontrada para ayudar a localizar a su familia.',
-        'fotos' => 'Agrega fotografías del hallazgo',
-        'ayuda_fotos' => 'Comparte fotografías recientes y claras del momento del hallazgo, donde se distingan sus características.',
+        'etiqueta' => 'Reporte de mascota vista',
+        'introduccion' => 'Comparte sus características y el lugar donde fue vista para ayudar a localizar a su familia.',
+        'fotos' => 'Agrega fotografías de la mascota vista',
+        'ayuda_fotos' => 'Comparte fotografías recientes y claras del momento en que viste la mascota, donde se distingan sus características.',
         'mascota' => 'Características observadas',
         'ayuda_mascota' => 'Describe lo que puedes observar. Si no conoces un dato opcional, puedes dejarlo vacío.',
-        'evento' => 'Hallazgo y ubicación', 'fecha' => 'Fecha en que fue encontrada',
-        'descripcion' => 'Información del hallazgo', 'ubicacion' => 'Ubicación del hallazgo',
-        'ayuda_ubicacion' => 'Indica dónde fue encontrada la mascota para que su familia pueda reconocer el lugar.',
+        'evento' => 'Vista y ubicación', 'fecha' => 'Fecha en que fue vista',
+        'descripcion' => 'Información de la mascota vista', 'ubicacion' => 'Ubicación donde fue vista',
+        'ayuda_ubicacion' => 'Indica dónde viste la mascota para que su familia pueda reconocer el lugar.',
         'consejo' => 'Acércala a su familia',
         'ayuda_consejo' => 'Describe sus colores y las características que observaste. No necesitas conocer su nombre ni su raza.',
     ];
@@ -36,7 +36,7 @@
         'color_principal' => ['Color principal', true, 100, 'Por ejemplo, café'],
         'color_secundario' => ['Color secundario', false, 100, 'Por ejemplo, blanco'],
         'tamano' => ['Tamaño', true, 50, ''], 'sexo' => ['Sexo', false, 50, ''],
-        'edad_aproximada' => ['Edad aproximada', false, 100, 'Por ejemplo, 2 años'],
+        'edad_aproximada' => ['Edad aproximada', false, 100, 'Por ejemplo, aproximadamente 2 años'],
         'rasgos_distintivos' => [$perdida ? 'Rasgos distintivos' : 'Características visibles', false, null, 'Manchas, forma de las orejas u otras marcas reconocibles'],
     ];
     $orden = $perdida
@@ -50,7 +50,7 @@
             <nav aria-label="Navegación principal">
                 <a href="{{ route('home') }}">Inicio</a>
                 <a href="{{ route('reportes-perdidos.index') }}">Mascotas perdidas</a>
-                <a href="{{ route('reportes-encontrados.index') }}">Mascotas encontradas</a>
+                <a href="{{ route('reportes-encontrados.index') }}">Mascotas vistas</a>
             </nav>
         </div>
     </header>
@@ -58,7 +58,7 @@
         <a class="report-back" href="{{ route('home') }}"><span aria-hidden="true">←</span> Volver al inicio</a>
         <div class="report-intro">
             <span class="report-badge">{{ $textos['etiqueta'] }}</span>
-            <h1>Reporta una mascota {{ $tipo }}</h1>
+            <h1>Reporta una mascota {{ $perdida ? 'perdida' : 'vista' }}</h1>
             <p>{{ $textos['introduccion'] }}</p>
         </div>
         <div class="report-layout">
@@ -84,13 +84,32 @@
                             @php
                                 [$etiqueta, $obligatorio, $maximo, $ejemplo] = $campos[$campo];
                                 $opciones = match ($campo) {
-                                    'tamano' => ['pequeño' => 'Pequeño', 'mediano' => 'Mediano', 'grande' => 'Grande'],
-                                    'sexo' => ['macho' => 'Macho', 'hembra' => 'Hembra'], default => [],
+                                    'especie' => config('mascotas.especies'),
+                                    'raza' => config('mascotas.razas.perro')
+                                        + config('mascotas.razas.gato'),
+                                    'color_principal' => config('mascotas.colores'),
+                                    'color_secundario' => config('mascotas.colores_secundarios'),
+                                    'tamano' => config('mascotas.tamanos'),
+                                    'sexo' => $perdida ? ['macho' => 'Macho', 'hembra' => 'Hembra'] : config('mascotas.sexos'),
+                                    'edad_aproximada' => config('mascotas.edades'),
+                                    default => [],
+                                };
+                                if ($campo === 'raza' && $perdida) {
+                                    unset($opciones['no_se']);
+                                }
+                                $personalizable = in_array($campo, ['especie', 'raza', 'color_principal', 'color_secundario', 'edad_aproximada'], true);
+                                $customPlaceholder = match ($campo) {
+                                    'especie' => 'Escribe la especie',
+                                    'raza' => 'Escribe la raza',
+                                    'edad_aproximada' => 'Por ejemplo, aproximadamente 2 años',
+                                    default => 'Escribe el dato',
                                 };
                             @endphp
                             <x-reportes.campo :name="$campo" :label="$etiqueta" :required="$obligatorio" :maxlength="$maximo"
                                 :placeholder="$ejemplo" :options="$opciones" :type="$campo === 'rasgos_distintivos' ? 'textarea' : 'text'"
-                                :wide="$campo === 'rasgos_distintivos' || ($perdida && $campo === 'nombre')" />
+                                :wide="$campo === 'rasgos_distintivos' || ($perdida && $campo === 'nombre')"
+                                :custom="$personalizable ? ['placeholder' => $customPlaceholder] : null"
+                                :dataAttributes="$campo === 'raza' ? ['race-select' => true] : ($campo === 'especie' ? ['species-select' => true] : [])" />
                         @endforeach
                     </div>
                 </x-reportes.seccion-formulario>

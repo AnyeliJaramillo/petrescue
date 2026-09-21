@@ -8,6 +8,7 @@ final readonly class ReporteTarjeta
     public function __construct(
         public int $id,
         public string $tipo_reporte,
+        public string $estado,
         public string $fecha_evento,
         public array $mascota,
         public ?array $ubicacion,
