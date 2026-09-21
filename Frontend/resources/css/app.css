@@ -3,7 +3,9 @@
 @import './components/location-selector.css';
 @import './components/forms.css';
 @import './components/photo-selector.css';
+@import './components/report-form.css';
 @import './pages/home.css';
+@import './pages/search.css';
 
 @source '../../../Backend/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../../Backend/storage/framework/views/*.php';

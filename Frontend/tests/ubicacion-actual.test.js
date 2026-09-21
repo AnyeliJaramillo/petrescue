@@ -14,6 +14,7 @@ class Elemento {
     listeners = new Map();
     addEventListener(name, handler) { this.listeners.set(name, handler); }
     fire(name, event = {}) { return this.listeners.get(name)?.(event); }
+    dispatchEvent(event) { return this.fire(event.type, event); }
 }
 
 const direccion = {
@@ -30,15 +31,16 @@ function preparar(fetch = async () => respuesta()) {
         .map(name => [name, new Elemento()]));
     const form = new Elemento();
     form.querySelector = () => ({ value: 'csrf-test' });
-    const container = {
+    const container = Object.assign(new Elemento(), {
+        ownerDocument: { defaultView: { Event } },
         dataset: { reverseUrl: '/ubicaciones/invertir', searchUrl: '/ubicaciones/buscar' },
         closest: () => form,
         querySelector(selector) {
             const field = selector.match(/^\[name="(.+)"\]$/);
             return field ? fields[field[1]] : controls[selector.match(/^\[data-location-(.+)\]$/)[1]];
         },
-    };
-    const map = { setView() { return this; }, on() { return this; } };
+    });
+    const map = { setView() { return this; }, on() { return this; }, invalidateSize() {} };
     const marker = {
         position: null,
         addTo() { return this; }, on() { return this; },

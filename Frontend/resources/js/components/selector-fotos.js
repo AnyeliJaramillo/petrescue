@@ -24,6 +24,7 @@ export function iniciarSelectorFotos(root, urls = URL) {
         const doc = selector.ownerDocument;
         let objectUrls = [];
         let version = 0;
+        let serverInvalid = input.getAttribute('aria-invalid') === 'true';
 
         const release = () => {
             for (const url of objectUrls) urls.revokeObjectURL(url);
@@ -52,7 +53,7 @@ export function iniciarSelectorFotos(root, urls = URL) {
                 }
                 errorsList.hidden = errors.size === 0;
                 input.setCustomValidity(errors.size ? 'Revisa las fotos seleccionadas o quita la selección.' : '');
-                input.setAttribute('aria-invalid', String(errors.size > 0));
+                input.setAttribute('aria-invalid', String(errors.size > 0 || serverInvalid));
                 status.textContent = errors.size
                     ? 'Revisa los archivos indicados antes de publicar.'
                     : files.length
@@ -94,11 +95,13 @@ export function iniciarSelectorFotos(root, urls = URL) {
         };
 
         const clearSelection = () => {
+            serverInvalid = false;
             input.value = '';
             count.value = '0';
             render();
         };
         const onChange = () => {
+            serverInvalid = false;
             count.value = String(input.files?.length ?? 0);
             render();
         };

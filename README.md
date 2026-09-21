@@ -105,7 +105,9 @@ php Backend/artisan view:cache
 php Backend/artisan route:list --except-vendor
 ```
 
-Las pruebas PHP usan SQLite en memoria y cubren los flujos de reportes, fotos, validación, paginación, DTO, arquitectura y recuperación ante fallos. Las pruebas JavaScript comprueban geolocalización con un formulario simulado.
+Las pruebas PHP usan SQLite en memoria y cubren los flujos de reportes, fotos, validación, paginación, DTO, arquitectura y recuperación ante fallos. Las pruebas JavaScript comprueban fotos, geolocalización y el formulario de cuatro pasos. Las pruebas del formulario usan jsdom y renderizan las vistas reales de Blade mediante un fixture PHP, por lo que requieren PHP y las dependencias de Composer instaladas.
+
+Los formularios comparten una vista y componentes, con contenido y acentos distintos para pérdida y hallazgo. JavaScript organiza los campos en cuatro pasos y genera un resumen local; todos los datos se publican juntos por las rutas existentes. Sin JavaScript, las cuatro secciones permanecen visibles. Consulta [el detalle del rediseño y su verificación](docs/FORMULARIOS_REPORTES.md).
 
 ## Rutas y datos
 

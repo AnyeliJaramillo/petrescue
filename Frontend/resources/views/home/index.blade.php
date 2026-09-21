@@ -5,24 +5,7 @@ Huellas en Casa
 @endsection
 
 @section('content')
-<header class="home-header">
-    <div class="home-container home-header-inner">
-        <div class="home-brand">
-            <span class="home-brand-mark" aria-hidden="true">H</span>
-            <div>
-                <p class="home-brand-name">Huellas en Casa</p>
-                <p class="home-brand-description">Portal de mascotas perdidas y encontradas</p>
-            </div>
-        </div>
-        <nav class="home-nav" aria-label="Navegación principal">
-            <a href="{{ route('home') }}" aria-current="page">Inicio</a>
-            <a href="{{ route('reportes-perdidos.index') }}">Mascotas perdidas</a>
-            <a href="{{ route('reportes-encontrados.index') }}">Mascotas encontradas</a>
-            <a href="#como-funciona">Cómo funciona</a>
-        </nav>
-        <a href="{{ route('reportes-perdidos.create') }}" class="home-button home-header-action">Publicar reporte</a>
-    </div>
-</header>
+<x-site-header />
 
 <main>
     <section class="home-container home-hero" aria-labelledby="home-title">
@@ -48,9 +31,9 @@ Huellas en Casa
                 <h2 id="home-panel-title" class="home-panel-title">Ayudemos a reunir familias</h2>
                 <p class="home-panel-description">Consulta los reportes de mascotas perdidas y encontradas de la comunidad.</p>
             </div>
-            <a href="{{ route('reportes-perdidos.index') }}" class="home-panel-link">
+            <a href="{{ route('busquedas.index') }}" class="home-panel-link">
                 <div>
-                    <strong>Ver mascotas perdidas</strong>
+                    <strong>Buscar mascotas reportadas</strong>
                     <p>Una pista puede ayudar a reunir una familia.</p>
                 </div>
                 <span class="home-panel-arrow" aria-hidden="true">→</span>

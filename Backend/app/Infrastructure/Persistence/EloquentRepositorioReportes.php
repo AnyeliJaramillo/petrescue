@@ -4,6 +4,8 @@ namespace App\Infrastructure\Persistence;
 
 use App\Application\Reportes\Contracts\RepositorioReportes;
 use App\Application\Reportes\Data\NuevoReporte;
+use App\Application\Reportes\Data\FiltrosReportes;
+use App\Application\Reportes\Data\ReporteTarjeta;
 use App\Application\Reportes\Data\PaginaReportes;
 use App\Application\Reportes\Data\ReporteDetalle;
 use App\Domain\Reportes\TipoReporte;
@@ -35,6 +37,7 @@ final class EloquentRepositorioReportes implements RepositorioReportes
     public function listar(TipoReporte $tipo, int $pagina, int $porPagina): PaginaReportes
     {
         $resultado = Reporte::with(['mascota.imagenes', 'ubicacion'])
+            ->where('estado', 'activo')
             ->where('tipo_reporte', $tipo->value)->latest()->orderByDesc('id')
             ->paginate($porPagina, ['*'], 'page', $pagina);
 
@@ -50,6 +53,54 @@ final class EloquentRepositorioReportes implements RepositorioReportes
             ->where('tipo_reporte', $tipo->value)->find($id);
 
         return $reporte ? $this->aDetalle($reporte) : null;
+    }
+
+    public function filtrar(FiltrosReportes $filtros, int $pagina, int $porPagina): PaginaReportes
+    {
+        $consulta = Reporte::query()->where('estado', 'activo')
+            ->whereIn('tipo_reporte', array_column(TipoReporte::cases(), 'value'))
+            ->with([
+                'mascota:id,nombre,especie,color_principal,tamano',
+                'mascota.imagenes' => fn ($query) => $query->select('id', 'mascota_id', 'ruta_imagen')->orderBy('id')->limit(1),
+                'ubicacion:reporte_id,barrio,ciudad',
+            ]);
+        if ($filtros->tipo) {
+            $consulta->where('tipo_reporte', $filtros->tipo->value);
+        }
+        $consulta->whereHas('mascota', function ($query) use ($filtros) {
+            // Nombres de columnas cerrados por el DTO; valores siempre parametrizados.
+            foreach ($filtros->caracteristicas() as $campo => $valor) {
+                $query->whereRaw('LOWER(TRIM('.$campo.')) = LOWER(?)', [trim($valor)]);
+            }
+        });
+        $resultado = $consulta->orderByDesc('created_at')->orderByDesc('id')
+            ->paginate($porPagina, ['id', 'mascota_id', 'tipo_reporte', 'fecha_evento'], 'page', $pagina);
+
+        return new PaginaReportes(
+            array_map(fn (Reporte $reporte) => new ReporteTarjeta(
+                id: $reporte->id,
+                tipo_reporte: $reporte->tipo_reporte,
+                fecha_evento: $reporte->fecha_evento,
+                mascota: $reporte->mascota->only(['nombre', 'especie', 'color_principal', 'tamano']),
+                ubicacion: $reporte->ubicacion?->only(['barrio', 'ciudad']),
+                imagen_url: $reporte->mascota->imagenes->first()?->url,
+            ), $resultado->items()),
+            $resultado->total(), $resultado->currentPage(), $resultado->perPage(),
+        );
+    }
+
+    public function opcionesFiltros(): array
+    {
+        $opciones = [];
+        foreach (['especie', 'color_principal', 'tamano', 'sexo', 'raza'] as $campo) {
+            $opciones[$campo] = Mascota::whereHas('reportes', fn ($query) => $query
+                ->where('estado', 'activo')->whereIn('tipo_reporte', array_column(TipoReporte::cases(), 'value')))
+                ->whereNotNull($campo)->whereRaw('TRIM('.$campo.") <> ''")
+                ->selectRaw('LOWER(TRIM('.$campo.')) AS valor')
+                ->distinct()->orderBy('valor')->pluck('valor')->all();
+        }
+
+        return $opciones;
     }
 
     private function aDetalle(Reporte $reporte): ReporteDetalle

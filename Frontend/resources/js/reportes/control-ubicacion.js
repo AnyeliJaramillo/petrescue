@@ -90,6 +90,8 @@ export function iniciarMapa(container, { L, geolocation, fetch: request }) {
     }
     refresh();
 
+    container.addEventListener('report:step-shown', () => map?.invalidateSize({ animate: false }));
+
     for (const key of ['direccion', 'barrio', 'ciudad', 'departamento']) {
         fields[key].addEventListener('input', () => {
             cancel(); state.editar(); refresh();
@@ -171,8 +173,9 @@ export function iniciarMapa(container, { L, geolocation, fetch: request }) {
                 status(error.message);
                 const missing = ['direccion', 'ciudad', 'departamento'].find(key => !fields[key].value.trim());
                 const target = missing ? fields[missing] : select('confirm');
+                target.dispatchEvent(new container.ownerDocument.defaultView.Event('report:reveal', { bubbles: true }));
                 target.focus();
-                target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                target.scrollIntoView({ block: 'center', behavior: 'instant' });
             }
         }
     });

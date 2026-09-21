@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\ReporteEncontradaController;
 use App\Http\Controllers\ReportePerdidaController;
 use App\Http\Controllers\UbicacionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/buscar', [BusquedaController::class, 'index'])->name('busquedas.index');
 
 Route::middleware('throttle:geocoding')->prefix('ubicaciones')->name('ubicaciones.')->group(function () {
     Route::post('/buscar', [UbicacionController::class, 'buscar'])->name('buscar');

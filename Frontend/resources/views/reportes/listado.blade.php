@@ -40,6 +40,7 @@ Mascotas {{ $tipo }}s
                 <p class="text-[#60746c] mt-2">
                     Aquí aparecen las mascotas {{ $tipo }}s publicadas por los usuarios.
                 </p>
+                <a href="{{ route('busquedas.index', ['tipo_reporte' => $tipo]) }}" class="home-button mt-4">Buscar por características</a>
             </div>
         </div>
 

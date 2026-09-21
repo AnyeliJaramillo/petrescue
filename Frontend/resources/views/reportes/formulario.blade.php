@@ -1,118 +1,135 @@
 @extends('layouts.app')
-
-@section('title')
-Reportar mascota {{ $tipo }}
-@endsection
-
+@section('title', 'Reporta una mascota ' . $tipo . ' | Huellas en Casa')
 @section('content')
-<header class="bg-[#f8f4ec] border-b border-[#e6ddd0]">
-        <div class="max-w-6xl mx-auto px-6 py-5 flex flex-wrap gap-4 justify-between items-center">
-            <a href="{{ route('home') }}" class="font-bold text-lg text-[#263b35]">
-                Huellas en Casa
-            </a>
-
-            <nav class="flex flex-wrap gap-6 text-sm">
-                <a href="{{ route('home') }}" class="hover:text-[#2f7d68]">Inicio</a>
-                <a href="{{ route('reportes-perdidos.index') }}" class="text-[#2f7d68] font-semibold">Mascotas
-                    perdidas</a>
-                <a href="{{ route('reportes-encontrados.index') }}" class="hover:text-[#2f7d68]">Mascotas
-                    encontradas</a>
+@php
+    // Configuración de presentación. El controlador determina el tipo publicado.
+    $perdida = $tipo === 'perdida';
+    $textos = $perdida ? [
+        'etiqueta' => 'Alerta de mascota perdida',
+        'introduccion' => 'Completa la información que pueda ayudar a reconocerla y encontrarla lo más pronto posible.',
+        'fotos' => 'Agrega fotografías recientes',
+        'ayuda_fotos' => 'Elige fotografías donde se vean su cara, su cuerpo y las marcas que ayuden a reconocerla.',
+        'mascota' => 'Datos de la mascota',
+        'ayuda_mascota' => 'Cada detalle puede ayudar a alguien a reconocer a tu mascota.',
+        'evento' => 'Pérdida y ubicación', 'fecha' => 'Fecha en que se perdió',
+        'descripcion' => 'Cuéntanos qué ocurrió', 'ubicacion' => 'Última ubicación conocida',
+        'ayuda_ubicacion' => 'Indica el lugar donde se vio por última vez. Puedes escribir la dirección o seleccionar un punto en el mapa.',
+        'consejo' => 'Ayuda a reconocerla',
+        'ayuda_consejo' => 'Una foto nítida y sus rasgos distintivos pueden hacer la diferencia para que alguien la identifique.',
+    ] : [
+        'etiqueta' => 'Reporte de mascota encontrada',
+        'introduccion' => 'Comparte sus características y el lugar donde fue encontrada para ayudar a localizar a su familia.',
+        'fotos' => 'Agrega fotografías del hallazgo',
+        'ayuda_fotos' => 'Comparte fotografías recientes y claras del momento del hallazgo, donde se distingan sus características.',
+        'mascota' => 'Características observadas',
+        'ayuda_mascota' => 'Describe lo que puedes observar. Si no conoces un dato opcional, puedes dejarlo vacío.',
+        'evento' => 'Hallazgo y ubicación', 'fecha' => 'Fecha en que fue encontrada',
+        'descripcion' => 'Información del hallazgo', 'ubicacion' => 'Ubicación del hallazgo',
+        'ayuda_ubicacion' => 'Indica dónde fue encontrada la mascota para que su familia pueda reconocer el lugar.',
+        'consejo' => 'Acércala a su familia',
+        'ayuda_consejo' => 'Describe sus colores y las características que observaste. No necesitas conocer su nombre ni su raza.',
+    ];
+    $campos = [
+        'nombre' => [$perdida ? 'Nombre de la mascota' : '¿Conoces su nombre?', false, 255, 'Por ejemplo, Luna'],
+        'especie' => ['Especie', true, 100, 'Perro, gato u otra especie'],
+        'raza' => [$perdida ? 'Raza' : 'Raza aparente', false, 100, 'Si la conoces'],
+        'color_principal' => ['Color principal', true, 100, 'Por ejemplo, café'],
+        'color_secundario' => ['Color secundario', false, 100, 'Por ejemplo, blanco'],
+        'tamano' => ['Tamaño', true, 50, ''], 'sexo' => ['Sexo', false, 50, ''],
+        'edad_aproximada' => ['Edad aproximada', false, 100, 'Por ejemplo, 2 años'],
+        'rasgos_distintivos' => [$perdida ? 'Rasgos distintivos' : 'Características visibles', false, null, 'Manchas, forma de las orejas u otras marcas reconocibles'],
+    ];
+    $orden = $perdida
+        ? ['nombre', 'especie', 'raza', 'color_principal', 'color_secundario', 'tamano', 'sexo', 'edad_aproximada', 'rasgos_distintivos']
+        : ['especie', 'color_principal', 'color_secundario', 'tamano', 'sexo', 'raza', 'edad_aproximada', 'nombre', 'rasgos_distintivos'];
+@endphp
+<div class="report-page report-page--{{ $tipo }}">
+    <header class="report-header">
+        <div class="report-header-inner">
+            <a href="{{ route('home') }}" class="report-brand"><span class="report-brand-mark" aria-hidden="true">H</span> Huellas en Casa</a>
+            <nav aria-label="Navegación principal">
+                <a href="{{ route('home') }}">Inicio</a>
+                <a href="{{ route('reportes-perdidos.index') }}">Mascotas perdidas</a>
+                <a href="{{ route('reportes-encontrados.index') }}">Mascotas encontradas</a>
             </nav>
         </div>
     </header>
-
-    <main class="max-w-4xl mx-auto px-6 py-10">
-        <div class="bg-white rounded-3xl shadow-lg p-8">
-
-            <div class="mb-8">
-                <p class="text-sm text-[#2f7d68] font-semibold mb-2">Publicar una alerta</p>
-                <h1 class="text-3xl font-bold">Reportar mascota {{ $tipo }}</h1>
-                <p class="text-[#60746c] mt-2">
-                    Completa la información para publicar el reporte y ayudar a reunir a la mascota con su familia.
-                </p>
-            </div>
-
-            @if (session('success'))
-                <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="bg-red-100 text-red-700 p-4 rounded-xl mb-6">
-                    <p>Revisa los siguientes campos:</p><ul class="list-disc pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-                </div>
-            @endif
-
+    <main class="report-main">
+        <a class="report-back" href="{{ route('home') }}"><span aria-hidden="true">←</span> Volver al inicio</a>
+        <div class="report-intro">
+            <span class="report-badge">{{ $textos['etiqueta'] }}</span>
+            <h1>Reporta una mascota {{ $tipo }}</h1>
+            <p>{{ $textos['introduccion'] }}</p>
+        </div>
+        <div class="report-layout">
             <form action="{{ route($ruta . '.store') }}" method="POST" enctype="multipart/form-data"
-                class="space-y-8">
+                class="report-form" data-report-form data-report-type="{{ $tipo }}">
                 @csrf
-
-                <x-selector-fotos />
-
-                <section>
-                    <h2 class="font-bold text-lg mb-4">Datos de la mascota</h2>
-
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <input name="nombre" placeholder="Nombre de la mascota" class="input" value="{{ is_scalar(old('nombre')) ? old('nombre') : '' }}">
-                        <input name="especie" placeholder="Especie: perro, gato, otro" class="input" required value="{{ is_scalar(old('especie')) ? old('especie') : '' }}">
-
-                        <input name="raza" placeholder="Raza" class="input" value="{{ is_scalar(old('raza')) ? old('raza') : '' }}">
-                        <select name="sexo" class="input">
-                            <option value="" @selected(old('sexo') === '')>Sexo</option>
-                            <option value="macho" @selected(old('sexo') === 'macho')>Macho</option>
-                            <option value="hembra" @selected(old('sexo') === 'hembra')>Hembra</option>
-                        </select>
-
-                        <select name="tamano" class="input" required>
-                            <option value="" @selected(old('tamano') === '')>Tamaño</option>
-                            <option value="pequeño" @selected(old('tamano') === 'pequeño')>Pequeño</option>
-                            <option value="mediano" @selected(old('tamano') === 'mediano')>Mediano</option>
-                            <option value="grande" @selected(old('tamano') === 'grande')>Grande</option>
-                        </select>
-
-                        <input name="color_principal" placeholder="Color principal" class="input" required value="{{ is_scalar(old('color_principal')) ? old('color_principal') : '' }}">
-
-                        <input name="edad_aproximada" placeholder="Edad aproximada" class="input" value="{{ is_scalar(old('edad_aproximada')) ? old('edad_aproximada') : '' }}">
-                        <input name="rasgos_distintivos" placeholder="Características o rasgos distintivos"
-                            class="input" value="{{ is_scalar(old('rasgos_distintivos')) ? old('rasgos_distintivos') : '' }}">
+                <x-reportes.stepper />
+                @if (session('success'))<p class="report-notice" role="status">{{ session('success') }}</p>@endif
+                @if ($errors->any())
+                    <div class="report-errors" role="alert" tabindex="-1">
+                        <h2>Revisa estos datos antes de publicar</h2>
+                        <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                     </div>
-                </section>
-
-                <section>
-                    <label class="font-bold text-lg" for="fecha_evento">Fecha del evento</label>
-                    <input id="fecha_evento" name="fecha_evento" type="date" class="input mt-3" required value="{{ is_scalar(old('fecha_evento')) ? old('fecha_evento') : '' }}">
-                </section>
-
-                <x-selector-ubicacion />
-                <section>
-                    <h2 class="font-bold text-lg mb-4">Descripción</h2>
-                    <textarea name="descripcion" rows="4"
-                        placeholder="Describe lo ocurrido, su comportamiento y cualquier dato importante." class="input">{{ is_scalar(old('descripcion')) ? old('descripcion') : '' }}</textarea>
-                </section>
-
-                <section>
-                    <h2 class="font-bold text-lg mb-4">Datos de contacto</h2>
-
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <input name="responsable_nombre" placeholder="Nombre" class="input" required value="{{ is_scalar(old('responsable_nombre')) ? old('responsable_nombre') : '' }}">
-                        <input name="responsable_telefono" placeholder="Teléfono" class="input" required value="{{ is_scalar(old('responsable_telefono')) ? old('responsable_telefono') : '' }}">
-                        <input name="responsable_correo" type="email" placeholder="Correo electrónico"
-                            class="input md:col-span-2" value="{{ is_scalar(old('responsable_correo')) ? old('responsable_correo') : '' }}">
+                @endif
+                <p class="report-required-note">Los campos con <span aria-hidden="true">*</span> son obligatorios. Los demás son opcionales.</p>
+                <x-reportes.seccion-formulario numero="1" :titulo="$textos['fotos']" :ayuda="$textos['ayuda_fotos']">
+                    <x-selector-fotos :descripcion="$textos['ayuda_fotos']" />
+                    <div class="report-tip"><strong>Una buena fotografía ayuda a reconocerla.</strong><p>Busca luz natural y una imagen sin filtros. Puedes seleccionar varias fotos o continuar sin ellas.</p></div>
+                </x-reportes.seccion-formulario>
+                <x-reportes.seccion-formulario numero="2" :titulo="$textos['mascota']" :ayuda="$textos['ayuda_mascota']">
+                    <div class="report-fields">
+                        @foreach ($orden as $campo)
+                            @php
+                                [$etiqueta, $obligatorio, $maximo, $ejemplo] = $campos[$campo];
+                                $opciones = match ($campo) {
+                                    'tamano' => ['pequeño' => 'Pequeño', 'mediano' => 'Mediano', 'grande' => 'Grande'],
+                                    'sexo' => ['macho' => 'Macho', 'hembra' => 'Hembra'], default => [],
+                                };
+                            @endphp
+                            <x-reportes.campo :name="$campo" :label="$etiqueta" :required="$obligatorio" :maxlength="$maximo"
+                                :placeholder="$ejemplo" :options="$opciones" :type="$campo === 'rasgos_distintivos' ? 'textarea' : 'text'"
+                                :wide="$campo === 'rasgos_distintivos' || ($perdida && $campo === 'nombre')" />
+                        @endforeach
                     </div>
-                </section>
-
-                <div class="flex justify-between items-center pt-6 border-t">
-                    <a href="{{ route('home') }}"
-                        class="border border-[#2f7d68] text-[#2f7d68] px-6 py-3 rounded-full font-semibold">
-                        Cancelar
-                    </a>
-
-                    <button type="submit" class="bg-[#2f7d68] text-white px-8 py-3 rounded-full font-semibold">
-                        Publicar reporte
-                    </button>
+                </x-reportes.seccion-formulario>
+                <x-reportes.seccion-formulario numero="3" :titulo="$textos['evento']" ayuda="Comparte la fecha y el lugar del evento con la mayor precisión que puedas.">
+                    <div class="report-fields report-event-fields">
+                        <x-reportes.campo name="fecha_evento" :label="$textos['fecha']" type="date" :required="true" :max="now()->toDateString()" />
+                        <x-reportes.campo name="descripcion" :label="$textos['descripcion']" type="textarea" :wide="true" placeholder="Describe lo ocurrido y cualquier detalle que pueda ayudar." />
+                    </div>
+                    <x-selector-ubicacion :titulo="$textos['ubicacion']" :descripcion="$textos['ayuda_ubicacion']" />
+                </x-reportes.seccion-formulario>
+                <x-reportes.seccion-formulario numero="4" titulo="Contacto y revisión" ayuda="Revisa la información y deja un contacto para quienes puedan ayudar.">
+                    <fieldset class="report-contact">
+                        <legend>Datos de contacto</legend>
+                        <div class="report-fields">
+                            <x-reportes.campo name="responsable_nombre" label="Nombre de contacto" :required="true" :maxlength="255" autocomplete="name" />
+                            <x-reportes.campo name="responsable_telefono" label="Teléfono" type="tel" :required="true" :maxlength="30" autocomplete="tel" />
+                            <x-reportes.campo name="responsable_correo" label="Correo electrónico" type="email" :maxlength="255" autocomplete="email" :wide="true" />
+                        </div>
+                    </fieldset>
+                    <p class="report-contact-note">Los datos de contacto y la ubicación se muestran en el reporte publicado. Comparte únicamente la información que deseas publicar.</p>
+                    <x-reportes.resumen-reporte :tipo="$tipo" :fecha="$textos['fecha']" />
+                </x-reportes.seccion-formulario>
+                <div class="report-actions">
+                    <a href="{{ route('home') }}" class="report-cancel">Cancelar</a>
+                    <div class="report-actions-buttons">
+                        <button type="button" class="report-button report-button-secondary" data-report-previous hidden>Anterior</button>
+                        <button type="button" class="report-button" data-report-next hidden>Continuar: datos de la mascota</button>
+                        <button type="submit" class="report-button" data-report-submit>Publicar reporte</button>
+                    </div>
                 </div>
             </form>
+            <aside class="report-aside" aria-label="Consejos para tu reporte">
+                <div class="report-aside-symbol" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 24 24 11l15 13v17H9V24Z"/><path d="M17 28c0-6 7-5 7-1 0-4 7-5 7 1 0 4-7 8-7 8s-7-4-7-8Z"/><path d="M33 9V4M39 12l4-4M40 18h6"/></svg></div>
+                <p class="report-aside-eyebrow">CADA DETALLE CUENTA</p>
+                <h2>{{ $textos['consejo'] }}</h2><p>{{ $textos['ayuda_consejo'] }}</p>
+                <ul><li>Fotografías claras y recientes.</li><li>Características fáciles de reconocer.</li><li>Fecha y ubicación del evento.</li><li>Un teléfono para contactarte.</li></ul>
+                <div class="report-aside-footer">Una comunidad que ayuda a reunir familias.</div>
+            </aside>
         </div>
     </main>
+</div>
 @endsection

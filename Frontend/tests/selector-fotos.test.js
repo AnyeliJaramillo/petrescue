@@ -13,6 +13,7 @@ function element(tag = 'div') {
         removeEventListener(event) { listeners.delete(event); },
         fire(event, detail = {}) { listeners.get(event)?.(detail); },
         setAttribute(key, value) { this.attributes[key] = value; },
+        getAttribute(key) { return this.attributes[key] ?? null; },
         setCustomValidity(value) { this.validityMessage = value; },
         get value() { return value; },
         set value(next) { value = next; if (next === '') this.files = []; },
